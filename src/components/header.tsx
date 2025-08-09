@@ -2,19 +2,24 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home } from 'lucide-react'
+import { Home, LogOut } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import NewTransactionForm from '@/components/new-transaction-form'
+import { logout } from '@/app/services/auth'
 
 export default function Header() {
   const pathname = usePathname()
+
+  const handleLogout = async () => {
+    await logout()
+  }
 
   return (
     <header className="w-full bg-background border-b">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link href="/" className="text-2xl font-bold text-primary">
-            My Budget
+            OlaFinanzas
           </Link>
           {pathname !== '/' && (
             <Button variant="ghost" asChild>
@@ -39,6 +44,12 @@ export default function Header() {
             </li> */}
             <li>
               <NewTransactionForm />
+            </li>
+            <li>
+              <Button variant="ghost" onClick={handleLogout} className="flex items-center space-x-2">
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
             </li>
           </ul>
         </nav>

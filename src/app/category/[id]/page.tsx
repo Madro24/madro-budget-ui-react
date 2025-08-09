@@ -13,24 +13,33 @@ export default function CategoryPage({params}: {params:{id: number}}) {
   const [totalPlanned,setTotalPlanned] = useState<number>(0);
   const [totalExpenses,setTotalExpenses] = useState<number>(0);
   const [balance,setBalance] = useState<number>(0);
-  const [categoryDetails, setCategoryDetails] = useState<CategoryDetails>(new CategoryDetails(
-                                                      {
-                                                        category: new Category({name: '', id: 0, planned: 0, expenses: 0}), 
-                                                        transactions: []
-                                                      }));
+  const [categoryDetails, setCategoryDetails] = useState<CategoryDetails>(new CategoryDetails({
+    category: new Category({
+      name: '', 
+      id: parseInt(categoryId.toString()) || 0, 
+      planned: 0, 
+      expenses: 0
+    }), 
+    transactions: []
+  }));
   const { isDataUpdated, updateData, updateSelectedCategory } = useTransactionStore();
 
   useEffect(() => {
-    getTransactionsByCategory(categoryId, setCategoryDetails);
-    updateData(false);
-    updateSelectedCategory(categoryId);
-  }, [params, isDataUpdated]);
+    if (categoryId) {
+      getTransactionsByCategory(categoryId, setCategoryDetails);
+      updateData(false);
+      updateSelectedCategory(categoryId);
+    }
+  }, [categoryId, isDataUpdated, updateData, updateSelectedCategory]);
 
   useEffect(() => {
-    setTitle((categoryDetails.category.name ?? 'Unknown').charAt(0).toUpperCase() + (categoryDetails.category.name ?? 'Unknown').slice(1));
-    setTotalPlanned(categoryDetails.category.planned);
-    setTotalExpenses(categoryDetails?.transactions.reduce((sum, transaction) => sum + transaction.amount, 0) ?? 0);
-    setBalance(totalPlanned - totalExpenses);
+    if (categoryDetails?.category) {
+      setTitle((categoryDetails.category.name ?? 'Unknown').charAt(0).toUpperCase() + (categoryDetails.category.name ?? 'Unknown').slice(1));
+      setTotalPlanned(categoryDetails.category.planned ?? 0);
+      const expenses = categoryDetails.transactions?.reduce((sum, transaction) => sum + (transaction.amount || 0), 0) ?? 0;
+      setTotalExpenses(expenses);
+      setBalance((categoryDetails.category.planned ?? 0) - expenses);
+    }
   }, [categoryDetails]);
 
 
@@ -67,20 +76,26 @@ export default function CategoryPage({params}: {params:{id: number}}) {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow key={categoryId}>
+              <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categoryDetails.transactions.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>{transaction.date}</TableCell>
-                  <TableCell>{transaction.description}</TableCell>
-                  <TableCell>${transaction.amount.toFixed(2)}</TableCell>
+              {!categoryDetails?.transactions?.length ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">No transactions found</TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                categoryDetails.transactions.map((transaction) => (
+                  <TableRow key={`transaction-${transaction.id}`}>
+                    <TableCell>{transaction.date}</TableCell>
+                    <TableCell>{transaction.description}</TableCell>
+                    <TableCell>${transaction.amount.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

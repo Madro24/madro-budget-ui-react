@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,7 +21,6 @@ export default function NewTransactionForm() {
   const [status, setStatus] = useState('COMPLETED');
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false)
-  const [response, setResponse] = useState('')
   const { updateData, selectedCategory } = useTransactionStore();
 
   useEffect(() => {
@@ -45,8 +44,9 @@ export default function NewTransactionForm() {
         description,
         amount: parseFloat(amount),
         status
-      }, setResponse)
-      updateData(true);
+      }, () => {
+        updateData(true);
+      });
 
       setIsOpen(false)
       // Reset form fields

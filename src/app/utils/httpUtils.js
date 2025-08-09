@@ -1,6 +1,11 @@
 
 export async function generalHttp(url, options, statusCodeSetter) {
-    await fetch(url, options).then((res) => {
+    const requestOptions = {
+        ...options,
+        credentials: 'include'
+    };
+    
+    await fetch(url, requestOptions).then((res) => {
         statusCodeSetter(res.status)
     }).catch((err) => {
         console.log(err)
@@ -8,13 +13,14 @@ export async function generalHttp(url, options, statusCodeSetter) {
 }
 
 export async function httpGet(url, dataSetter, statusCodeSetter) {
-    await fetch(url).then((res) => {
+    await fetch(url, {
+        credentials: 'include'
+    }).then((res) => {
         if (statusCodeSetter !== undefined) {
             statusCodeSetter(res.status)
         }
         return res.json()
     }).then((data) => {
-        
         dataSetter(data);
     }).catch((err) => {
         console.log(err)
@@ -27,7 +33,8 @@ export async function httpPost(url, data, statusCodeSetter) {
         body: JSON.stringify(data),
         headers: {
             'Content-Type': 'application/json'
-        }
+        },
+        credentials: 'include'
     }).then((res) => {
         statusCodeSetter(res.status)
     }).catch((err) => {

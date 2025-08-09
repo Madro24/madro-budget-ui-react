@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { getBudgetDetail } from '@/app/services/budgets'
 import Budget from '@/app/modules/budget'
 import Category from '@/app/modules/category'
-import useTransactionStore from '../store/transactionStore'
+import useTransactionStore from '@/app/store/transactionStore'
 
 export default function Home() {
   const [budgetActive, setBudgetActive] = useState<Budget | null>(null);
@@ -26,18 +26,23 @@ export default function Home() {
   useEffect(() => {
     getBudgetDetail(setBudgetActive);
     updateData(false);
-  }, [isDataUpdated]);
+  }, [isDataUpdated, updateData]);
   
   useEffect(() => {
-    setCategories(budgetActive?.categories ?? []);
-    setTotalPlanned(budgetActive?.categories.reduce((sum, category) => sum + category.planned, 0) ?? 0);
-    setTotalExpenses(budgetActive?.categories.reduce((sum, category) => sum + category.expenses, 0) ?? 0);
-    setBalance(totalPlanned - totalExpenses);
-    setTotalPages(Math.ceil(categories.length / ITEMS_PER_PAGE));
-    setPaginatedCategories(categories.slice(
-      (currentPage - 1) * ITEMS_PER_PAGE,
-      currentPage * ITEMS_PER_PAGE));
-  }, [budgetActive]);
+    if (budgetActive?.categories) {
+      setCategories(budgetActive.categories);
+      const planned = budgetActive.categories.reduce((sum, category) => sum + (category.planned || 0), 0);
+      const expenses = budgetActive.categories.reduce((sum, category) => sum + (category.expenses || 0), 0);
+      setTotalPlanned(planned);
+      setTotalExpenses(expenses);
+      setBalance(planned - expenses);
+      setTotalPages(Math.ceil(budgetActive.categories.length / ITEMS_PER_PAGE));
+      setPaginatedCategories(budgetActive.categories.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+      ));
+    }
+  }, [budgetActive, currentPage, ITEMS_PER_PAGE]);
 
   const handleUpdateCategory = (id: number, field: 'planned' | 'expenses', value: number) => {
     setCategories(categories.map(category => 
@@ -102,35 +107,41 @@ export default function Home() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedCategories.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell>{category.name}</TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      value={category.planned}
-                      onChange={(e) => handleUpdateCategory(category.id, 'planned', parseFloat(e.target.value))}
-                      className="w-24"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      value={category.expenses}
-                      onChange={(e) => handleUpdateCategory(category.id, 'expenses', parseFloat(e.target.value))}
-                      className="w-24"
-                    />
-                  </TableCell>
-                  <TableCell className={category.planned - category.expenses >= 0 ? 'text-green-600' : 'text-red-600'}>
-                    ${(category.planned - category.expenses).toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    {<Link href={`/category/${category.id}`}>
-                      <Button variant="outline">View Details</Button>
-                     </Link> }
-                  </TableCell>
+              {paginatedCategories?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">No categories found</TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                paginatedCategories?.map((category) => (
+                  <TableRow key={category.id}>
+                    <TableCell>{category.name}</TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={category.planned}
+                        onChange={(e) => handleUpdateCategory(category.id, 'planned', parseFloat(e.target.value) || 0)}
+                        className="w-24"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={category.expenses}
+                        onChange={(e) => handleUpdateCategory(category.id, 'expenses', parseFloat(e.target.value) || 0)}
+                        className="w-24"
+                      />
+                    </TableCell>
+                    <TableCell className={category.planned - category.expenses >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      ${(category.planned - category.expenses).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      {<Link href={`/category/${category.id}`}>
+                        <Button variant="outline">View Details</Button>
+                      </Link>}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
           <div className="pagination-controls">

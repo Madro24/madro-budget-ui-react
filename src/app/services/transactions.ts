@@ -7,7 +7,7 @@ export function getTransactionsByCategory(category: number, setTransactions: (ca
     httpGet(URL, setTransactions);
 }
 
-export function saveTransaction(transaction: Transaction, setResponse: (response: any) => void) {
+export function saveTransaction(transaction: Transaction, setResponse: (response: Transaction) => void) {
     const URL = process.env.NEXT_PUBLIC_API_TRANSACTION_URL;
     httpPost(URL,transaction, setResponse);
 }
